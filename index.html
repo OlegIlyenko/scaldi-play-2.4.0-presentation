@@ -167,7 +167,30 @@ class UserModule extends Module {
         </section>
 
         <section>
-          <h2>DI in Play 2.3</h2>
+          <h2>"DI" in Play 2.3</h2>
+
+          <pre><code data-trim contenteditable class="scala">
+object Pets extends Controller {
+
+  def show(id : Long) = Action {
+    Ok(views.html.pet(Pet.findById(id)))
+  }
+
+}
+
+object Pet {
+
+  def findById(id : Long) : Pet =
+    DB.withConnection({ implicit c =>
+      SQL(basicQuery + "id = {id}").on("id" -> id)().map(rowToPet)
+    }).head
+
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>DI Library Integration</h2>
           <pre><code data-trim contenteditable class="scala">
 package play.api
 
@@ -177,6 +200,53 @@ trait GlobalSettings {
 
   // ...
 }
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Current Scaldi Integration</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+package scaldi.play
+
+trait ScaldiSupport extends GlobalSettings with Injectable {
+  def applicationModule: Injector
+  private var currentInjector: Option[Injector] = None
+
+  abstract override def onStart(app: Application) =
+    currentInjector = Some(createApplicationInjector(app))
+
+  abstract override def onStop(app: Application) =
+    currentInjector foreach (_.destroy())
+
+  override def getControllerInstance[A](controllerClass: Class[A]): A =
+    currentInjector map (_.getBinding(...)) getOrElse (...)
+}
+          </code></pre>
+        </section>
+
+         <section>
+          <h2>Scaldi Usage</h2>
+
+          <pre style="margin: 0"><code class="scala">
+class Application(implicit inj: Injector)
+       extends Controller with Injectable {
+  val messageService = inject [MessageService]
+}
+          </code></pre>
+          <pre style="margin: 0" class="fragment roll-in" data-fragment-index="1"><code class="scala">
+class MyModule extends Module {
+  binding to new Application
+  bind [MessageService] to new OfficialMessageService
+}
+          </code></pre>
+          <pre style="margin: 0;background-color: #ffeded" class="fragment roll-in" data-fragment-index="2"><code class="scala">
+object Global extends GlobalSettings with ScaldiSupport {
+  def applicationModule = new MyModule :: new SomeOtherModule
+}
+          </code></pre>
+          <pre style="margin: 0" class="fragment roll-in" data-fragment-index="3"><code class="scala">
+GET  /   @controllers.Application.index
           </code></pre>
         </section>
 
@@ -196,19 +266,20 @@ trait GlobalSettings {
 
         <section data-background="#febd1d">
           <h1>Thank you!</h1>
-          <h2 class="fragment roll-in" data-fragment-index="2">Questions?</h2>
 
           <p>
-            <ul class="fragment roll-in" data-fragment-index="3">
+            <ul class="fragment roll-in" data-fragment-index="2">
               <li><a href="http://bit.ly/scaldi-play24-presentation" target="_blank">http://bit.ly/scaldi-play24-presentation</a></li>
             </ul>
           </p>
           <p>
-            <ul class="fragment roll-in" data-fragment-index="4">
+            <ul class="fragment roll-in" data-fragment-index="3">
               <li><strong>Scaldi:</strong> <a href="http://scaldi.org" target="_blank">http://scaldi.org/</a></li>
               <li><strong>Twitter:</strong> <a href="https://twitter.com/easyangel" target="_blank">https://twitter.com/easyangel</a></li>
             </ul>
           </p>
+
+          <h2 class="fragment roll-in" data-fragment-index="4">Questions?</h2>
         </section>
 			</div>
 
