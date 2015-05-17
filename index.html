@@ -65,11 +65,119 @@
           <h3>Lightweight Scala Dependency Injection Library</h3>
         </section>
 
+        <section>
+          <h2>Inject Bindings</h2>
+
+          <pre><code data-trim contenteditable class="scala">
+inject [SomeClass]
+
+inject [Database] (identified by 'remote and by default new Riak)
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Bind</h2>
+
+          <pre><code data-trim contenteditable class="scala">
+class UserModule extends Module {
+  bind [MessageService] to new OfficialMessageService
+
+  binding identifiedBy "greeting.official" to "Welcome"
+}
+          </code></pre>
+
+          <p class="fragment roll-in" data-fragment-index="2">
+            Usage
+          </p>
+
+          <pre class="fragment roll-in" data-fragment-index="2"><code data-trim contenteditable class="scala">
+class OfficialMessageService(implicit inj: Injector)
+          extends MessageService with Injectable {
+
+  val officialGreeting =
+    inject [String] (identified by "greeting.official")
+
+  def getGreetMessage(name: String) =
+    s"$officialGreeting, $name!"
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Injector Composition</h2>
+
+          <pre><code data-trim contenteditable class="scala">
+def tokenModule = new Module {
+  bind [Tokens] to new TokenRepo(db = inject [Database])
+}
+
+def dbModule = new Module {
+  bind [Database] to new Riak
+}
+
+def appModule = tokenModule :: dbModule
+          </code></pre>
+
+          <p class="fragment fade-in" data-fragment-index="1">
+            and then test it
+          </p>
+
+          <pre class="fragment roll-in" data-fragment-index="1"><code data-trim contenteditable class="scala">
+def mocksModule = new Module {
+  bind [Database] to new InMemoryDb
+}
+
+implicit val testModule = mocksModule :: appModule
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Some Features</h2>
+
+          <p class="fragment roll-in" data-fragment-index="1">
+            Constructor injection
+          </p>
+
+          <pre class="fragment roll-in" data-fragment-index="1"><code data-trim contenteditable class="scala">
+class TokenRepo(db: Database, metrics: Metrics) extends Tokens
+
+bind [Tokens] to injected [TokenRepo]
+          </code></pre>
+
+          <p class="fragment roll-in" data-fragment-index="2">
+            Conditions
+          </p>
+
+          <pre class="fragment roll-in" data-fragment-index="2"><code data-trim contenteditable class="scala">
+class UserModule extends Module {
+  bind [MessageService] when (inDevMode or inTestMode) to
+    new SimpleMessageService
+
+  bind [MessageService] when inProdMode to
+    new OfficialMessageService
+}
+          </code></pre>
+        </section>
+
         <section class="image-section even-more-opaque"
                  data-background="assets/photos/past.jpg"
                  data-credit="by Neil Moralee"
                  data-image-link="https://www.flickr.com/photos/neilmoralee/13621977953">
           <h2>Past</h2>
+        </section>
+
+        <section>
+          <h2>DI in Play 2.3</h2>
+          <pre><code data-trim contenteditable class="scala">
+package play.api
+
+trait GlobalSettings {
+
+  def getControllerInstance[A](controllerClass: Class[A]): A = ...
+
+  // ...
+}
+          </code></pre>
         </section>
 
         <section class="image-section more-opaque"
