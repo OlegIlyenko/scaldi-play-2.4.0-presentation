@@ -257,11 +257,214 @@ GET  /   @controllers.Application.index
           <h2>Play 2.4</h2>
         </section>
 
+        <section>
+          <h2>JSR 330</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+import javax.inject.{Inject, Provider, Singleton}
+
+@Singleton
+class RoutesProvider @Inject() (
+            injector: Injector,
+            environment: Environment,
+            configuration: Configuration,
+            httpConfig: HttpConfiguration) extends Provider[Router] {
+  // ...
+}
+
+@Singleton
+class Crypto @Inject() (config: CryptoConfig) {
+  // ...
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Scaldi JSR 330 Support</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+implicit val inj = new Module {
+  binding to annotated [RoutesProvider]
+
+  binding identifiedBy qualifier[SomeQualifier] to annotated [MyService]
+
+  binding identifiedBy annotation(SomeQualifierImpl.of("dep1")) to
+    annotated [MyService]
+}
+          </code></pre>
+
+          <p class="fragment roll-in" data-fragment-index="1">
+            + <strong>OnDemandAnnotationInjector</strong>
+          </p>
+        </section>
+
+        <section>
+          <h2>Under the Hood</h2>
+
+          <img src="assets/img/pic.svg" />
+        </section>
+
+        <section>
+          <h2>BuiltinModule</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+package play.api.inject
+
+class BuiltinModule extends play.api.inject.Module {
+  def bindings(env: Environment, configuration: Configuration) =
+    Seq(
+      bind[ApplicationLifecycle].to(bind[DefaultApplicationLifecycle])
+      bind[Router].toProvider[RoutesProvider],
+      bind[ActorSystem].toProvider[ActorSystemProvider],
+      bind[ExecutionContext].toProvider[ExecutionContextProvider],
+
+      // ...
+    )
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Plugins</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+class EhCacheModule extends play.api.inject.Module {
+  def bindings(environment: Environment, configuration: Configuration) = {
+    // ...
+
+    Seq(
+      bind[CacheManager].toProvider[CacheManagerProvider],
+      bind[CacheApi].to(bind[CacheApi]
+            .qualifiedWith(named(defaultCacheName))),
+      bind[JavaCacheApi].to[DefaultJavaCacheApi]
+    )
+  }
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>reference.conf</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+play {
+  modules {
+    enabled += "play.api.cache.EhCacheModule"
+  }
+
+  cache {
+    # ...
+  }
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Deprecations</h2>
+
+          <ul>
+            <li><strong>GlobalSettings</strong> should not be used anymore</li>
+            <li class="fragment roll-in" data-fragment-index="1">Plugin is just another <strong>Module</strong></li>
+            <li class="fragment roll-in" data-fragment-index="2"><strong>FakeApplication</strong> is just a helper to construct a <strong>Module</strong></li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Using Scaldi in Play 2.4</h2>
+
+          <p>
+            <strong>ScaldiSupport</strong> trait is also deprecated...
+          </p>
+
+          <p class="fragment roll-in" data-fragment-index="1">
+            ... use <strong>application.conf</strong> instead
+          </p>
+
+          <pre class="fragment roll-in" data-fragment-index="1"><code class="scala" style="overflow: hidden;">
+play.application.loader = scaldi.play.ScaldiApplicationLoader
+
+play.modules.enabled += "modules.MyModule"
+play.modules.enabled += "modules.SomeOtherModule"
+play.modules.enabled += "scaldi.play.ControllerInjector"
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>ScaldiApplicationLoader</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+package scaldi.play
+
+class ScaldiApplicationLoader(val builder: ScaldiApplicationBuilder)
+            extends ApplicationLoader {
+  def load(context: Context)  =
+    new ScaldiApplicationBuilder()
+      .in(context.environment)
+      .loadConfig(context.initialConfiguration)
+      .prependModule(new Module {
+        bind [OptionalSourceMapper] to
+            new OptionalSourceMapper(context.sourceMapper)
+        bind [WebCommands] to context.webCommands
+      })
+      .build
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Testing</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+val application = new ScaldiApplicationBuilder()
+  .prependModule(new TestModule).build()
+
+running(application) {
+  val home =  route(FakeRequest(GET, "/")).get
+
+  // ...
+}
+          </code></pre>
+
+          <p class="fragment roll-in" data-fragment-index="1">or simply</p>
+
+          <pre class="fragment roll-in" data-fragment-index="1"><code class="scala" style="overflow: hidden;">
+withScaldiApp(modules = Seq(new TestModule)) {
+  val home =  route(FakeRequest(GET, "/")).get
+
+  // ...
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Full Control</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+val module = new TestModule :: new MyModule :: new ControllerInjector
+
+withScaldiApp(modules = Seq(module, new EhCacheModule, new BuiltinModule),
+              loadModules = (_, _) => Seq.empty) {
+
+  val home =  route(FakeRequest(GET, "/")).get
+
+  // ...
+}
+          </code></pre>
+        </section>
+
         <section class="image-section more-opaque"
                  data-background="assets/photos/future.jpg"
                  data-credit="by Mike"
                  data-image-link="https://www.flickr.com/photos/pmiaki/6978183235">
           <h2>Future</h2>
+        </section>
+
+        <section>
+          <ul>
+            <li>Polish integration code</li>
+            <li class="fragment roll-in" data-fragment-index="1">Review testing support</li>
+            <li class="fragment roll-in" data-fragment-index="2">Play 2.3 and 2.4 would be both supported</li>
+          </ul>
         </section>
 
         <section data-background="#febd1d">
