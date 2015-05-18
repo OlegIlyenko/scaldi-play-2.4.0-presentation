@@ -395,8 +395,7 @@ play.modules.enabled += "scaldi.play.ControllerInjector"
           <pre><code class="scala" style="overflow: hidden;">
 package scaldi.play
 
-class ScaldiApplicationLoader(val builder: ScaldiApplicationBuilder)
-            extends ApplicationLoader {
+class ScaldiApplicationLoader extends ApplicationLoader {
   def load(context: Context)  =
     new ScaldiApplicationBuilder()
       .in(context.environment)
@@ -470,18 +469,35 @@ libraryDependencies +=
         </section>
 
         <section>
-          <h2>Pros</h2>
+          <h2>Conclusion</h2>
 
           <ul>
-            <li class="fragment roll-in" data-fragment-index="1">Point</li>
+            <li>Was <strong>fun</strong> to implement</li>
+            <li class="fragment roll-in" data-fragment-index="1">
+              <span class="advantage">&#x1f44d;&#x1f44d;</span> Play finally got proper DI mechanism
+
+              <ul>
+                <li class="fragment roll-in" data-fragment-index="2">
+                  <span class="advantage">&#x1f44d;&#x1f44d;&#x1f44d;</span> No global variables and singletons in future
+                </li>
+              </ul>
+            </li>
+            <li class="fragment roll-in" data-fragment-index="3">
+              Despite my dislike of annotations, they are necessary in this case
+            </li>
+            <li class="fragment roll-in" data-fragment-index="4">
+              Took me a weekend<span style="color: darkred">*</span> to implement JSR 330 spec
+            </li>
+            <li class="fragment roll-in" data-fragment-index="5">
+              Lesson learned: TCK does not cover all cases
+            </li>
+            <li class="fragment roll-in" data-fragment-index="6">
+              <span class="advantage">&#x1f44d;</span> Play core and plugins are DI library agnostic
+            </li>
+            <li class="fragment roll-in" data-fragment-index="7">
+              <span class="advantage">&#x1f44d;</span> Compile-time and runtime DI mechanism supported
+            </li>
           </ul>
-
-          <h2 class="fragment roll-in" data-fragment-index="2">Cons</h2>
-
-          <ul>
-            <li class="fragment roll-in" data-fragment-index="3">Point</li>
-          </ul>
-
         </section>
 
         <section class="image-section more-opaque"
