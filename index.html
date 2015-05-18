@@ -204,7 +204,7 @@ trait GlobalSettings {
         </section>
 
         <section>
-          <h2>Current Scaldi Integration</h2>
+          <h2>Play 2.3 Scaldi Integration</h2>
 
           <pre><code class="scala" style="overflow: hidden;">
 package scaldi.play
@@ -450,6 +450,38 @@ withScaldiApp(modules = Seq(module, new EhCacheModule, new BuiltinModule),
   // ...
 }
           </code></pre>
+        </section>
+
+        <section>
+          <h2>build.sbt</h2>
+
+          <pre><code class="scala" style="overflow: hidden;">
+libraryDependencies +=
+  "org.scaldi" %% "scaldi-play" % "0.5-play-2.4.0-RC3-10"
+          </code></pre>
+
+          <p class="fragment roll-in" data-fragment-index="1">
+            Example Project
+          </p>
+
+          <p class="fragment roll-in" data-fragment-index="1">
+            <a href="https://github.com/OlegIlyenko/scaldi-play-example" target="_blank">https://github.com/OlegIlyenko/scaldi-play-example</a>
+          </p>
+        </section>
+
+        <section>
+          <h2>Pros</h2>
+
+          <ul>
+            <li class="fragment roll-in" data-fragment-index="1">Point</li>
+          </ul>
+
+          <h2 class="fragment roll-in" data-fragment-index="2">Cons</h2>
+
+          <ul>
+            <li class="fragment roll-in" data-fragment-index="3">Point</li>
+          </ul>
+
         </section>
 
         <section class="image-section more-opaque"
